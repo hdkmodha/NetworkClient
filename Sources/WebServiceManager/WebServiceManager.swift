@@ -13,11 +13,11 @@ final class WebServiceManager: Sendable {
     
     private init() {}
     
-    func fetch<Value: Codable>(resource: WebResource<Value>, configureDecoder: ((JSONDecoder) -> Void)? = nil) async -> Result<Value, Error> {
+    func fetch<T: Codable>(resource: WebResource<T>, configureDecoder: ((JSONDecoder) -> Void)? = nil) async throws -> T {
         
         guard let url = resource.url else {
             assertionFailure("Provide valid url")
-            return .failure(NetworkError.invalidURL(resource.url?.absoluteString ?? ""))
+            throw NetworkError.invalidURL("invalid URL: \(resource.url?.absoluteString ?? "")")
         }
         
         var request = URLRequest(url: url)
@@ -32,28 +32,31 @@ final class WebServiceManager: Sendable {
         }
         
         do {
+            
             let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                return .failure(NetworkError.invalidResponse)
-            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else { throw NetworkError.invalidResponse }
+            
             print("Response: \(httpResponse)")
             
             guard (200...299).contains(httpResponse.statusCode) else {
-                return .failure(ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError)
+                throw ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError
             }
             
             do {
                 let decoder = Coders.jsonDecoder
                 configureDecoder?(decoder)
-                let result = try decoder.decode(Value.self, from: data)
-                return .success(result)
+                let result = try decoder.decode(T.self, from: data)
+                return result
             } catch let error as DecodingError {
                 print(decodingError(error: error))
-                return .failure(NetworkError.canNotParse(decodingError(error: error)))
+                throw NetworkError.canNotParse(decodingError(error: error))
+            } catch let error {
+                throw error
             }
         } catch {
             print("Request Error: \(error.localizedDescription)")
-            return .failure(ServerStatus.badRequest)
+            throw ServerStatus.badRequest
         }
         
     }

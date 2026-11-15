@@ -43,7 +43,7 @@ public enum HTTPMethod: CustomStringConvertible, Sendable {
     }
 }
 
-public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
+public enum ServerStatus: Int, Error, Sendable {
     case success = 200
     case badRequest = 400
     case unauthorized = 401
@@ -56,7 +56,7 @@ public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
         return self.rawValue
     }
     
-    public var description: String {
+    public var localizedDescription: String {
         switch self {
         case .success:
             return Constants.ErrorMessage.successMessage
@@ -76,16 +76,16 @@ public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
     }
 }
 
-enum NetworkError: Error, CustomStringConvertible {
+public enum NetworkError: Error {
     case invalidURL(String)
     case invalidResponse
     case canNotParse(String)
     case unExpectedValue
     
-    var description: String {
+    public var localizedDescription: String {
         switch self {
         case .invalidURL(let string):
-            return string
+            return "Invalid URL: \(string)"
         case .invalidResponse:
             return "invalid response"
         case .canNotParse(let error):
@@ -114,8 +114,8 @@ public struct WebResource<Value: Codable> {
         self.header = header
     }
     
-    public func request() async -> Result<Value, Error>  {
-        return await WebServiceManager.shared.fetch(resource: self)
+    public func request() async throws -> Value  {
+        return try await WebServiceManager.shared.fetch(resource: self)
     }
     
 //    func uploadRequest(progress: Progress?, completion: @escaping @Sendable (Result<Value, ServerStatus>) -> Void) async  {
