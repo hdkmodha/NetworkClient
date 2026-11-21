@@ -5,7 +5,9 @@
 //  Created by Hardik Modha on 29/11/23.
 //
 
-import UIKit
+import Foundation
+import Helpers
+
 
 final class WebServiceManager: Sendable {
     
@@ -13,47 +15,38 @@ final class WebServiceManager: Sendable {
     
     private init() {}
     
-    func fetch<Value: Codable>(resource: WebResource<Value>, configureDecoder: ((JSONDecoder) -> Void)? = nil) async -> Result<Value, Error> {
-        
-        guard let url = resource.url else {
-            assertionFailure("Provide valid url")
-            return .failure(NetworkError.invalidURL(resource.url?.absoluteString ?? ""))
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = resource.httpMethod.description
-        
-        if let parameters = resource.httpMethod.parameter {
-            request.httpBody = parameters.toData
-        }
-        
-        if let header = resource.header {
-            request.allHTTPHeaderFields = header
-        }
+    func fetch<T: Codable>(resource: WebResource<T>, configureDecoder: ((JSONDecoder) -> Void)? = nil) async throws -> T {
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                return .failure(NetworkError.invalidResponse)
-            }
+            
+            let (data, response) = try await URLSession.shared.data(for: resource.request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else { throw NetworkError.invalidResponse }
+            
             print("Response: \(httpResponse)")
             
             guard (200...299).contains(httpResponse.statusCode) else {
-                return .failure(ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError)
+                throw ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError
+            }
+            
+            for interceptor in resource.networkClient.responseInterceptors {
+                interceptor.inrercept(response: httpResponse)
             }
             
             do {
                 let decoder = Coders.jsonDecoder
                 configureDecoder?(decoder)
-                let result = try decoder.decode(Value.self, from: data)
-                return .success(result)
+                let result = try decoder.decode(T.self, from: data)
+                return result
             } catch let error as DecodingError {
                 print(decodingError(error: error))
-                return .failure(NetworkError.canNotParse(decodingError(error: error)))
+                throw NetworkError.canNotParse(decodingError(error: error))
+            } catch let error {
+                throw error
             }
         } catch {
             print("Request Error: \(error.localizedDescription)")
-            return .failure(ServerStatus.badRequest)
+            throw ServerStatus.badRequest
         }
         
     }

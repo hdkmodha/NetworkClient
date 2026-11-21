@@ -1,8 +1,8 @@
 //
-//  WebResource.swift
+//  Coders.swift
+//  NetworkClient
 //
-//
-//  Created by Hardik Modha on 30/11/23.
+//  Created by Hardik Modha on 21/11/26.
 //
 
 import Foundation
@@ -11,8 +11,16 @@ import Foundation
 public typealias JSONType = (any Encodable & Sendable)
 public typealias HTTPHeaders = [String: String]
 public typealias Progress = @Sendable (Double) -> Void
-
 public typealias ResponseCodable = Codable & Sendable
+
+public enum Coders {
+    public static let jsonDecoder = JSONDecoder()
+    public static let jsonEncoder = JSONEncoder()
+}
+
+
+
+
 
 public enum HTTPMethod: CustomStringConvertible, Sendable {
     case get
@@ -43,7 +51,7 @@ public enum HTTPMethod: CustomStringConvertible, Sendable {
     }
 }
 
-public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
+public enum ServerStatus: Int, Error, Sendable {
     case success = 200
     case badRequest = 400
     case unauthorized = 401
@@ -56,7 +64,7 @@ public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
         return self.rawValue
     }
     
-    public var description: String {
+    public var localizedDescription: String {
         switch self {
         case .success:
             return Constants.ErrorMessage.successMessage
@@ -76,50 +84,19 @@ public enum ServerStatus: Int, CustomStringConvertible, Error, Sendable {
     }
 }
 
-enum NetworkError: Error, CustomStringConvertible {
+public enum NetworkError: Error {
     case invalidURL(String)
     case invalidResponse
     case canNotParse(String)
-    case unExpectedValue
     
-    var description: String {
+    public var localizedDescription: String {
         switch self {
         case .invalidURL(let string):
             return string
         case .invalidResponse:
             return "invalid response"
-        case .canNotParse(let error):
-            return error
-        case .unExpectedValue:
-            return Constants.ErrorMessage.unExpectedValueMessage
+        case .canNotParse(let message):
+            return message
         }
     }
-}
-
-public struct WebResource<Value: Codable> {
-    
-    let path: APIService
-    var httpMethod: HTTPMethod
-    var header: HTTPHeaders?
-    
-    var url: URL? { return self.path.url }
-    
-    public init(
-        path: APIService,
-        httpMethod: HTTPMethod = .get,
-        header: HTTPHeaders? = nil
-    ) {
-        self.path = path
-        self.httpMethod = httpMethod
-        self.header = header
-    }
-    
-    public func request() async -> Result<Value, Error>  {
-        return await WebServiceManager.shared.fetch(resource: self)
-    }
-    
-//    func uploadRequest(progress: Progress?, completion: @escaping @Sendable (Result<Value, ServerStatus>) -> Void) async  {
-//        await WebServiceManager.shared.postResource(self, progressCompletion: progress, completion: completion)
-//    }
-    
 }
