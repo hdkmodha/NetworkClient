@@ -7,11 +7,6 @@
 
 import Foundation
 
-enum Coders {
-    static let jsonDecoder = JSONDecoder()
-    static let jsonEncoder = JSONEncoder()
-}
-
 public extension Encodable {
     var toData: Data? {
         do {

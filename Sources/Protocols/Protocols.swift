@@ -9,7 +9,7 @@ import Foundation
 
 
 
-public protocol NetworkInterceptor {
+public protocol RequestInterceptor {
     func adapt(_ urlRequest: inout URLRequest)
     func retry(_ request: inout URLRequest, dueTo error: Error, retryCount: Int) async -> Bool
 }

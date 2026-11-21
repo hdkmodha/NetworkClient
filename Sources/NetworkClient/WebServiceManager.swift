@@ -5,7 +5,9 @@
 //  Created by Hardik Modha on 29/11/23.
 //
 
-import UIKit
+import Foundation
+import Helpers
+
 
 final class WebServiceManager: Sendable {
     
@@ -15,25 +17,9 @@ final class WebServiceManager: Sendable {
     
     func fetch<T: Codable>(resource: WebResource<T>, configureDecoder: ((JSONDecoder) -> Void)? = nil) async throws -> T {
         
-        guard let url = resource.url else {
-            assertionFailure("Provide valid url")
-            throw NetworkError.invalidURL("invalid URL: \(resource.url?.absoluteString ?? "")")
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = resource.httpMethod.description
-        
-        if let parameters = resource.httpMethod.parameter {
-            request.httpBody = parameters.toData
-        }
-        
-        if let header = resource.header {
-            request.allHTTPHeaderFields = header
-        }
-        
         do {
             
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: resource.request)
             
             guard let httpResponse = response as? HTTPURLResponse else { throw NetworkError.invalidResponse }
             
@@ -41,6 +27,10 @@ final class WebServiceManager: Sendable {
             
             guard (200...299).contains(httpResponse.statusCode) else {
                 throw ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError
+            }
+            
+            for interceptor in resource.networkClient.responseInterceptors {
+                interceptor.inrercept(response: httpResponse)
             }
             
             do {

@@ -4,23 +4,35 @@
 import PackageDescription
 
 let package = Package(
-    name: "WebServiceManager",
-    platforms: [.iOS(.v13)],
+    name: "NetworkClient",
+    platforms: [.iOS(.v17)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "WebServiceManager",
-            targets: ["WebServiceManager"]),
+            name: "NetworkClient",
+            targets: ["NetworkClient"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "WebServiceManager",
+            name: "NetworkClient",
+            dependencies: [
+                "Helpers"
+            ],
             swiftSettings: [
                 .enableUpcomingFeature("StrictConcurrency")
             ]
         ),
-        
+        .target(
+            name: "Helpers",
+            dependencies: [
+                "Protocols"
+            ]
+        ),
+        .target(
+            name: "Protocols",
+            dependencies: []
+        )
     ]
 )
