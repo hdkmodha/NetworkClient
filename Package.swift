@@ -26,13 +26,8 @@ let package = Package(
         ),
         .target(
             name: "Helpers",
-            dependencies: [
-                "Protocols"
-            ]
-        ),
-        .target(
-            name: "Protocols",
             dependencies: []
-        )
+        ),
+        
     ]
 )

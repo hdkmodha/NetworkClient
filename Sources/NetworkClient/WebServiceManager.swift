@@ -23,14 +23,13 @@ final class WebServiceManager: Sendable {
             
             guard let httpResponse = response as? HTTPURLResponse else { throw NetworkError.invalidResponse }
             
-            print("Response: \(httpResponse)")
             
             guard (200...299).contains(httpResponse.statusCode) else {
                 throw ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError
             }
             
             for interceptor in resource.networkClient.responseInterceptors {
-                interceptor.inrercept(response: httpResponse)
+                interceptor.inrercept(response: httpResponse, andStatus: ServerStatus(rawValue: httpResponse.statusCode) ?? .internalServerError)
             }
             
             do {

@@ -15,5 +15,5 @@ public protocol RequestInterceptor {
 }
 
 public protocol ResposeInterceptor {
-    func inrercept(response: HTTPURLResponse)
+    func inrercept(response: HTTPURLResponse, andStatus status: ServerStatus)
 }
