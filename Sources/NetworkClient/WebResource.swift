@@ -7,10 +7,6 @@
 
 import Foundation
 import Helpers
-import Protocols
-
-
-
 
 public struct WebResource<Value: Codable> {
     
